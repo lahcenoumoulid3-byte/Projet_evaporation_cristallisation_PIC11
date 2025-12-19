@@ -1,0 +1,52 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Environnements virtuels
+venv/
+.venv/
+env/
+ENV/
+*.egg-info/
+
+# Tests et coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+
+# Git
+.git/
+.gitignore
+
+# Documentation de référence (déjà analysée)
+reference_design/
+
+# Logs
+*.log
+
+# Fichiers temporaires
+*.tmp
+temp/
+tmp/
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Données sensibles (si présentes)
+.env
+secrets.toml
+
+# README et docs (optionnel, décommenter si vous voulez les inclure)
+# README.md
+# *.pdf
