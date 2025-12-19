@@ -17,17 +17,14 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
-# Ajouter le dossier modules au path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'modules'))
-
 # Imports des modules
-import thermodynamique as thermo
-from evaporateurs import EvaporateurMultiEffets
-from cristallisation import (
+import modules.thermodynamique as thermo
+from modules.evaporateurs import EvaporateurMultiEffets
+from modules.cristallisation import (
     CinetiqueCristallisation, BilanPopulation,
     dimensionner_cristalliseur
 )
-from optimisation import AnalyseEconomique, CoutsInvestissement
+from modules.optimisation import AnalyseEconomique, CoutsInvestissement
 
 
 # Configuration de la page
