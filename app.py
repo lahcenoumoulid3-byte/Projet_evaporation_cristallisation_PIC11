@@ -546,10 +546,10 @@ def page_cristallisation():
                 G_final_um = G_final * 1e6 * 3600 # um/h
                 
                 st.markdown(f"""
-                **Loi de Croissance :** $G = k_g \cdot S^g \cdot \exp\\left(\\frac{{-E_g}}{{RT}}\\right)$
+                **Loi de Croissance :** $G = k_g \\cdot S^g \\cdot \\exp\\\\left(\\\\frac{{-E_g}}{{RT}}\\\\right)$
                 
                 **Calcul à {Tf_opt}°C :**
-                - Terme Arrhenius : $\exp(\\frac{{-{Eg_opt}}}{{8.314 \\times {T_kelvin:.1f}}}) = {Arrhenius:.2e}$
+                - Terme Arrhenius : $\\exp(\\frac{{-{Eg_opt}}}{{8.314 \\times {T_kelvin:.1f}}}) = {Arrhenius:.2e}$
                 - Terme Sursaturation : ${max(0, S_Tf):.4f}^{{1.5}} = {max(0, S_Tf)**1.5:.4f}$
                 - **Vitesse de Croissance $G$** : {G_final:.2e} m/s
                 - **En unités pratiques** : **{G_final_um:.2f} μm/h** (Vitesse réaliste ✅)
