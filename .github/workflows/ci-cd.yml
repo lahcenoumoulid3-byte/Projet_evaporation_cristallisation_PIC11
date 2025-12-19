@@ -95,9 +95,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-      
-      - name: Image digest
-        run: echo ${{ steps.meta.outputs.digest }}
 
   # Job 3: Test du container Docker
   docker-test:
