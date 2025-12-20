@@ -15,7 +15,7 @@ from scipy.integrate import odeint, solve_ivp
 from scipy.interpolate import interp1d
 from typing import Callable, Tuple, Dict, List
 from dataclasses import dataclass
-import thermodynamique as thermo
+from . import thermodynamique as thermo
 
 
 @dataclass

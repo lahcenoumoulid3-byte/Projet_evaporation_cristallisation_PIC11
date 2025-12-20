@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  evaporation-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: evaporation-cristallisation-pic11
+    ports:
+      - "8501:8501"
+    environment:
+      - STREAMLIT_SERVER_HEADLESS=true
+      - STREAMLIT_SERVER_ENABLE_CORS=false
+      - STREAMLIT_BROWSER_GATHER_USAGE_STATS=false
+    volumes:
+      # Optionnel: pour persistance des données si besoin
+      # - ./data:/app/data
+      - ./assets:/app/assets:ro # Lecture seule pour les assets
+    restart: unless-stopped
+    healthcheck:
+      test: [ "CMD", "curl", "--fail", "http://localhost:8501/_stcore/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+# Réseau optionnel si vous voulez connecter à d'autres services
+# networks:
+#   app-network:
+#     driver: bridge

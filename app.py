@@ -17,84 +17,84 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
-# Ajouter le dossier modules au path
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'modules'))
-
 # Imports des modules
-import thermodynamique as thermo
-from evaporateurs import EvaporateurMultiEffets
-from cristallisation import (
+import modules.thermodynamique as thermo
+from modules.evaporateurs import EvaporateurMultiEffets
+from modules.cristallisation import (
     CinetiqueCristallisation, BilanPopulation,
     dimensionner_cristalliseur
 )
-from optimisation import AnalyseEconomique, CoutsInvestissement
+from modules.optimisation import AnalyseEconomique, CoutsInvestissement
 
 
 # Configuration de la page
 st.set_page_config(
-    page_title="Évaporation-Cristallisation",
+    page_title="Évaporation-Cristallisation PIC11",
     page_icon="🧪",
     layout="wide",
-    initial_sidebar_state="expanded"
+    initial_sidebar_state="expanded",
+    menu_items={
+        'About': "Projet PIC11 - Évaporation & Cristallisation du Saccharose"
+    }
 )
 
-# CSS personnalisé pour un design moderne
-st.markdown("""
-<style>
-    .main-header {
-        font-size: 2.5rem;
-        font-weight: bold;
-        color: #1f77b4;
-        text-align: center;
-        padding: 1rem 0;
-        background: linear-gradient(90deg, #e3f2fd 0%, #bbdefb 100%);
-        border-radius: 10px;
-        margin-bottom: 2rem;
+# Chargement et injection du CSS personnalisé (Design DistillSim-inspired)
+def load_custom_css():
+    """Charge et injecte le CSS personnalisé."""
+    css_path = os.path.join(os.path.dirname(__file__), 'assets', 'custom_style.css')
+    try:
+        with open(css_path, 'r', encoding='utf-8') as f:
+            css_content = f.read()
+        st.markdown(f'<style>{css_content}</style>', unsafe_allow_html=True)
+    except FileNotFoundError:
+        st.warning("⚠️ Fichier CSS personnalisé non trouvé. Utilisation du style par défaut.")
+
+load_custom_css()
+
+# Configuration Plotly - Modern Theme
+PLOTLY_TEMPLATE = {
+    'layout': {
+        'colorway': ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'],
+        'font': {'family': 'Inter, Segoe UI, sans-serif', 'size': 12, 'color': '#1e293b'},
+        'paper_bgcolor': 'white',
+        'plot_bgcolor': '#f8fafc',
+        'title': {'font': {'size': 18, 'color': '#1e293b', 'family': 'Inter, sans-serif'}},
+        'xaxis': {'gridcolor': '#e2e8f0', 'linecolor': '#cbd5e1'},
+        'yaxis': {'gridcolor': '#e2e8f0', 'linecolor': '#cbd5e1'}
     }
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 10px;
-        border-left: 4px solid #1f77b4;
-    }
-    .stButton>button {
-        background-color: #1f77b4;
-        color: white;
-        border-radius: 5px;
-        padding: 0.5rem 2rem;
-        font-weight: bold;
-    }
-    .stButton>button:hover {
-        background-color: #1565c0;
-    }
-</style>
-""", unsafe_allow_html=True)
+}
+
 
 
 def page_accueil():
     """Page d'accueil."""
-    st.markdown('<div class="main-header">🧪 Projet Évaporation-Cristallisation du Saccharose</div>', 
-                unsafe_allow_html=True)
+    st.markdown('''
+    <div class="main-header">
+        <h1>Projet Évaporation-Cristallisation</h1>
+        <p>Simulation industrielle complète - PIC11</p>
+    </div>
+    ''', unsafe_allow_html=True)
+
     
     st.markdown("""
-    ## 📋 Présentation du Projet
+    ## Présentation du Projet
     
     Ce projet simule un procédé industriel complet de concentration et cristallisation du saccharose 
     comprenant :
     
-    ### 🔥 Partie 1: Évaporateurs Multi-Effets
+    ### Partie 1: Évaporateurs Multi-Effets
     - Modélisation thermodynamique avec **CoolProp** et **thermo**
     - Bilans matière et énergie
     - Optimisation du nombre d'effets (2-5)
     - Analyse de sensibilité paramétrique
     
-    ### ❄️ Partie 2: Cristallisation Batch
+    ### Partie 2: Cristallisation Batch
     - Cinétique de nucléation et croissance
     - Résolution du bilan de population
     - Comparaison de profils de refroidissement
     - Dimensionnement du cristalliseur
     
-    ### 💰 Partie 3: Analyse Économique
+    ### Partie 3: Analyse Économique
     - Coûts d'investissement (CAPEX)
     - Coûts d'exploitation (OPEX)
     - Retour sur investissement (ROI)
@@ -104,19 +104,19 @@ def page_accueil():
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.info("**📊 Données du Procédé**\n\n"
+        st.info("**Données du Procédé**\n\n"
                 "• Débit: 10 000 kg/h\n"
                 "• Concentration: 15% → 65%\n"
                 "• Vapeur: 3.5 bar")
     
     with col2:
-        st.success("**🎯 Objectifs**\n\n"
+        st.success("**Objectifs**\n\n"
                    "• Maximiser économie vapeur\n"
                    "• Minimiser coûts\n"
                    "• Optimiser distribution cristaux")
     
     with col3:
-        st.warning("**🛠️ Technologies**\n\n"
+        st.warning("**Technologies**\n\n"
                    "• Python + CoolProp\n"
                    "• NumPy + SciPy\n"
                    "• Streamlit + Plotly")
@@ -124,11 +124,15 @@ def page_accueil():
 
 def page_evaporateurs():
     """Page de simulation des évaporateurs."""
-    st.markdown('<div class="main-header">🔥 Évaporateurs Multi-Effets</div>', 
-                unsafe_allow_html=True)
+    st.markdown('''
+    <div class="main-header">
+        <h1>Évaporateurs Multi-Effets</h1>
+        <p>Modélisation thermodynamique et bilans matière-énergie</p>
+    </div>
+    ''', unsafe_allow_html=True)
     
     # Sidebar pour les paramètres (Communs)
-    st.sidebar.header("⚙️ Paramètres de Simulation")
+    st.sidebar.header("Paramètres de Simulation")
     
     n_effets = st.sidebar.slider("Nombre d'effets", 2, 5, 3)
     debit = st.sidebar.number_input("Débit alimentation (kg/h)", 5000, 20000, 10000, 1000)
@@ -139,7 +143,7 @@ def page_evaporateurs():
     
     # Onglets supprimés sur demande
     
-    if st.sidebar.button("🚀 Lancer la Simulation", key="sim_evap"):
+    if st.sidebar.button("Lancer la Simulation", key="sim_evap"):
         with st.spinner("Simulation en cours..."):
             try:
                 # Simulation
@@ -154,7 +158,7 @@ def page_evaporateurs():
                 )
                 
                 # Métriques clés
-                st.subheader("📊 Résultats Globaux")
+                st.subheader("Résultats Globaux")
                 col1, col2, col3, col4 = st.columns(4)
                 
                 with col1:
@@ -170,7 +174,7 @@ def page_evaporateurs():
                     st.metric("Consommation spécifique", f"{res['consommation_specifique']:.3f} kg/kg")
                 
                 # Tableau des résultats par effet
-                st.subheader("📋 Résultats par Effet")
+                st.subheader("Résultats par Effet")
                 
                 data_effets = []
                 for r in res['resultats_effets']:
@@ -188,7 +192,7 @@ def page_evaporateurs():
                 st.dataframe(df_effets, use_container_width=True)
                 
                 # Graphiques
-                st.subheader("📈 Visualisations")
+                st.subheader("Visualisations")
                 
                 # Créer les graphiques avec Plotly
                 fig = make_subplots(
@@ -208,7 +212,7 @@ def page_evaporateurs():
                 # Températures
                 fig.add_trace(
                     go.Scatter(x=effets, y=temperatures, mode='lines+markers',
-                              name='Température', line=dict(color='red', width=3),
+                              name='Température', line=dict(color='#ff6b6b', width=3),
                               marker=dict(size=10)),
                     row=1, col=1
                 )
@@ -216,7 +220,7 @@ def page_evaporateurs():
                 # Concentrations
                 fig.add_trace(
                     go.Scatter(x=effets, y=concentrations, mode='lines+markers',
-                              name='Concentration', line=dict(color='blue', width=3),
+                              name='Concentration', line=dict(color='#00bfff', width=3),
                               marker=dict(size=10)),
                     row=1, col=2
                 )
@@ -224,14 +228,14 @@ def page_evaporateurs():
                 # Débits vapeur
                 fig.add_trace(
                     go.Bar(x=effets, y=debits_vapeur, name='Débit vapeur',
-                           marker_color='green'),
+                           marker_color='#20c997'),
                     row=2, col=1
                 )
                 
                 # Surfaces
                 fig.add_trace(
                     go.Bar(x=effets, y=surfaces, name='Surface',
-                           marker_color='orange'),
+                           marker_color='#003366'),
                     row=2, col=2
                 )
                 
@@ -245,9 +249,19 @@ def page_evaporateurs():
                 fig.update_yaxes(title_text="Débit (kg/h)", row=2, col=1)
                 fig.update_yaxes(title_text="Surface (m²)", row=2, col=2)
                 
-                fig.update_layout(height=700, showlegend=False)
+                # Appliquer le template DistillSim
+                fig.update_layout(
+                    height=700, 
+                    showlegend=False,
+                    font=PLOTLY_TEMPLATE['layout']['font'],
+                    paper_bgcolor=PLOTLY_TEMPLATE['layout']['paper_bgcolor'],
+                    plot_bgcolor=PLOTLY_TEMPLATE['layout']['plot_bgcolor']
+                )
+                fig.update_xaxes(gridcolor='#e9ecef', linecolor='#dee2e6')
+                fig.update_yaxes(gridcolor='#e9ecef', linecolor='#dee2e6')
                 
                 st.plotly_chart(fig, use_container_width=True)
+
                     
             except Exception as e:
                 st.error(f"Erreur simulation: {e}")
@@ -257,16 +271,24 @@ def page_evaporateurs():
 
 def page_cristallisation():
     """Page de simulation de la cristallisation."""
-    st.markdown('<div class="main-header">❄️ Cristallisation Batch (v2.0)</div>', 
-                unsafe_allow_html=True)
+    st.markdown('''
+    <div class="main-header">
+        <h1>Cristallisation Batch</h1>
+        <p>Cinétique de nucléation, croissance et bilan de population</p>
+    </div>
+    ''', unsafe_allow_html=True)
     
     # Paramètres
-    st.sidebar.header("⚙️ Paramètres de Cristallisation")
+    st.sidebar.header("Paramètres de Cristallisation")
     
     # Création des onglets
-    tab1, tab2, tab3, tab4 = st.tabs(["🚀 Simulation", "🔬 Analyse & Calibration", "📑 Détails Calculs", "🆚 Comparaison Avant/Après"])
+    tab1, tab2, tab3, tab4 = st.tabs(["Simulation", "Analyse & Calibration", "Détails Calculs", "Comparaison Avant/Après"])
     
     with tab1:
+        # Initialiser session_state pour persist results
+        if 'crist_results' not in st.session_state:
+            st.session_state.crist_results = None
+        
         # Réintroduction T0
         T0 = st.sidebar.slider("Température initiale (°C)", 60, 80, 70, 1)
         Tf = st.sidebar.slider("Température finale (°C)", 25, 45, 30, 1)
@@ -275,7 +297,7 @@ def page_cristallisation():
         profil = st.sidebar.selectbox("Profil de refroidissement", 
                                       ['lineaire', 'exponentiel', 'optimal'])
         
-        if st.sidebar.button("🚀 Lancer la Simulation", key="sim_crist"):
+        if st.sidebar.button("Lancer la Simulation", key="sim_crist"):
             with st.spinner("Simulation en cours (peut prendre quelques secondes)..."):
                 try:
                     cinetique = CinetiqueCristallisation()
@@ -286,60 +308,81 @@ def page_cristallisation():
                         duree_heures=duree, profil=profil, n_classes=50
                     )
                     
-                    # Métriques
-                    st.subheader("📊 Résultats de la Cristallisation")
-                    col1, col2, col3, col4 = st.columns(4)
-                    
-                    with col1:
-                        st.metric("L50 (médiane)", f"{res['L50']:.1f} μm")
-                    
-                    with col2:
-                        st.metric("L moyen", f"{res['L_moyen']:.1f} μm")
-                    
-                    with col3:
-                        st.metric("CV", f"{res['CV']:.3f}")
-                    
-                    with col4:
-                        st.metric("Rendement", f"{res['rendement']:.1f} %")
-                    
-                    # Graphiques
-                    st.subheader("📈 Distribution de Taille des Cristaux")
-                    
-                    fig = go.Figure()
-                    fig.add_trace(go.Scatter(
-                        x=res['L_classes'],
-                        y=res['distribution_finale'],
-                        mode='lines',
-                        fill='tozeroy',
-                        name='Distribution',
-                        line=dict(color='purple', width=2)
-                    ))
-                    
-                    fig.update_layout(
-                        title=f"Distribution de Taille - Profil {profil}",
-                        xaxis_title="Taille des cristaux (μm)",
-                        yaxis_title="Densité de population",
-                        height=500
-                    )
-                    
-                    st.plotly_chart(fig, use_container_width=True)
-                    
-                    # Informations supplémentaires
-                    st.info(f"""
-                    **Paramètres de simulation:**
-                    - Profil: {profil}
-                    - Température: {T0}°C → {Tf}°C
-                    - Durée: {duree} heures
-                    - Concentration finale: {res['concentration_finale']:.2f} g/100g
-                    - Masse de cristaux: {res['masse_cristaux']:.2f} kg
-                    """)
+                    # Sauvegarder dans session_state
+                    st.session_state.crist_results = {
+                        'res': res,
+                        'T0': T0,
+                        'Tf': Tf,
+                        'duree': duree,
+                        'profil': profil
+                    }
                     
                 except Exception as e:
                     st.error(f"❌ Erreur lors de la simulation: {e}")
                     st.exception(e)
+        
+        # Afficher les résultats si disponibles
+        if st.session_state.crist_results is not None:
+            res = st.session_state.crist_results['res']
+            T0 = st.session_state.crist_results['T0']
+            Tf = st.session_state.crist_results['Tf']
+            duree = st.session_state.crist_results['duree']
+            profil = st.session_state.crist_results['profil']
+            
+            # Métriques
+            st.subheader("Résultats de la Cristallisation")
+            col1, col2, col3, col4 = st.columns(4)
+            
+            with col1:
+                st.metric("L50 (médiane)", f"{res['L50']:.1f} μm")
+            
+            with col2:
+                st.metric("L moyen", f"{res['L_moyen']:.1f} μm")
+            
+            with col3:
+                st.metric("CV", f"{res['CV']:.3f}")
+            
+            with col4:
+                st.metric("Rendement", f"{res['rendement']:.1f} %")
+            
+            # Graphiques
+            st.subheader("Distribution de Taille des Cristaux")
+            
+            fig = go.Figure()
+            fig.add_trace(go.Scatter(
+                x=res['L_classes'],
+                y=res['distribution_finale'],
+                mode='lines',
+                fill='tozeroy',
+                name='Distribution',
+                line=dict(color='purple', width=2)
+            ))
+            
+            fig.update_layout(
+                title=f"Distribution de Taille - Profil {profil}",
+                xaxis_title="Taille des cristaux (μm)",
+                yaxis_title="Densité de population",
+                height=500
+            )
+            
+            st.plotly_chart(fig, use_container_width=True)
+            
+            # Informations supplémentaires
+            st.info(f"""
+            **Paramètres de simulation:**
+            - Profil: {profil}
+            - Température: {T0}°C → {Tf}°C
+            - Durée: {duree} heures
+            - Concentration finale: {res['concentration_finale']:.2f} g/100g
+            - Masse de cristaux: {res['masse_cristaux']:.2f} kg
+            """)
 
     with tab2:
-        st.header("🔬 Analyse de Sensibilité & Calibration")
+        # Initialiser session_state pour tab2
+        if 'sensi_results' not in st.session_state:
+            st.session_state.sensi_results = None
+        
+        st.header("Analyse de Sensibilité & Calibration")
         st.markdown("""
         Cette section permet d'analyser l'impact des paramètres critiques sur la cristallisation
         et de justifier les choix de calibration pour éviter les résultats nuls (zéros).
@@ -359,84 +402,89 @@ def page_cristallisation():
             - Énergie d'activation: **18000 J/mol** (Réaliste)
             """)
             
-        if st.button("🔄 Lancer l'Analyse de Sensibilité", key="run_sensi"):
+        if st.button("Lancer l'Analyse de Sensibilité", key="run_sensi"):
             with st.spinner("Analyse en cours (cela peut prendre une minute)..."):
                 try:
-                    # Import local pour éviter problèmes circulaires si existants
                     from optimisation import AnalyseSensibilite
                     
-                    # Fonction dummy car on utilise une méthode spécifique
                     analyseur = AnalyseSensibilite(lambda: None)
                     res_sensi = analyseur.analyse_sensibilite_cristallisation()
                     
-                    # 1. Graphique Concentration
-                    st.subheader("1. Impact de la Concentration Initiale")
-                    df_conc = res_sensi['concentration']
+                    # Sauvegarder dans session_state
+                    st.session_state.sensi_results = res_sensi
                     
-                    fig_conc = make_subplots(specs=[[{"secondary_y": True}]])
-                    
-                    fig_conc.add_trace(
-                        go.Scatter(x=df_conc['concentration_initiale'], y=df_conc['L50'],
-                                  name="Taille L50 (μm)", line=dict(color='blue')),
-                        secondary_y=False
-                    )
-                    
-                    fig_conc.add_trace(
-                        go.Scatter(x=df_conc['concentration_initiale'], y=df_conc['rendement'],
-                                  name="Rendement (%)", line=dict(color='green', dash='dot')),
-                        secondary_y=True
-                    )
-                    
-                    fig_conc.update_layout(title_text="Taille et Rendement vs Concentration Initiale")
-                    fig_conc.update_xaxes(title_text="Concentration Initiale (g/100g)")
-                    fig_conc.update_yaxes(title_text="Taille L50 (μm)", secondary_y=False)
-                    fig_conc.update_yaxes(title_text="Rendement (%)", secondary_y=True)
-                    
-                    st.plotly_chart(fig_conc, use_container_width=True)
-                    
-                    st.markdown("""
-                    **Observation:**
-                    - En dessous de ~70 g/100g, la sursaturation est nulle ou négative → **Pas de cristaux (L50 = 0)**.
-                    - C'est la cause principale du problème des "zéros".
-                    - **Choix optimal: 78 g/100g** pour avoir une taille et un rendement corrects.
-                    """)
-                    
-                    # 2. Graphique Énergie d'Activation
-                    st.subheader("2. Impact de l'Énergie d'Activation (Eg)")
-                    df_Eg = res_sensi['energie_activation']
-                    
-                    fig_Eg = go.Figure()
-                    fig_Eg.add_trace(go.Scatter(
-                        x=df_Eg['energie_activation'], y=df_Eg['L50'],
-                        mode='lines+markers', name='L50',
-                        line=dict(color='red')
-                    ))
-                    
-                    fig_Eg.update_layout(
-                        title="Taille des cristaux vs Énergie d'Activation",
-                        xaxis_title="Énergie d'Activation (J/mol)",
-                        yaxis_title="Taille L50 (μm)"
-                    )
-                    
-                    st.plotly_chart(fig_Eg, use_container_width=True)
-                    
-                    st.markdown("""
-                    **Observation:**
-                    - Si Eg est trop élevée (> 40000 J/mol), la croissance est extrêmement lente → **Cristaux quasi-invisibles**.
-                    - **Choix optimal: 18000 J/mol** (typique pour le saccharose) pour obtenir des cristaux de taille réaliste (~300-500 μm).
-                    """)
-                    
-                    # Tableau récapitulatif
-                    st.subheader("📋 Données de l'Analyse")
-                    with st.expander("Voir les données brutes"):
-                        st.write("Variation Concentration:")
-                        st.dataframe(df_conc)
-                        st.write("Variation Énergie d'Activation:")
-                        st.dataframe(df_Eg)
-                        
                 except Exception as e:
                     st.error(f"Erreur lors de l'analyse: {e}")
                     st.exception(e)
+        
+        # Afficher les résultats si disponibles
+        if st.session_state.sensi_results is not None:
+            res_sensi = st.session_state.sensi_results
+            
+            # 1. Graphique Concentration
+            st.subheader("1. Impact de la Concentration Initiale")
+            df_conc = res_sensi['concentration']
+            
+            fig_conc = make_subplots(specs=[[{"secondary_y": True}]])
+            
+            fig_conc.add_trace(
+                go.Scatter(x=df_conc['concentration_initiale'], y=df_conc['L50'],
+                          name="Taille L50 (μm)", line=dict(color='blue')),
+                secondary_y=False
+            )
+            
+            fig_conc.add_trace(
+                go.Scatter(x=df_conc['concentration_initiale'], y=df_conc['rendement'],
+                          name="Rendement (%)", line=dict(color='green', dash='dot')),
+                secondary_y=True
+            )
+            
+            fig_conc.update_layout(title_text="Taille et Rendement vs Concentration Initiale")
+            fig_conc.update_xaxes(title_text="Concentration Initiale (g/100g)")
+            fig_conc.update_yaxes(title_text="Taille L50 (μm)", secondary_y=False)
+            fig_conc.update_yaxes(title_text="Rendement (%)", secondary_y=True)
+            
+            st.plotly_chart(fig_conc, use_container_width=True)
+            
+            st.markdown("""
+            **Observation:**
+            - En dessous de ~70 g/100g, la sursaturation est nulle ou négative → **Pas de cristaux (L50 = 0)**.
+            - C'est la cause principale du problème des "zéros".
+            - **Choix optimal: 78 g/100g** pour avoir une taille et un rendement corrects.
+            """)
+            
+            # 2. Graphique Énergie d'Activation
+            st.subheader("2. Impact de l'Énergie d'Activation (Eg)")
+            df_Eg = res_sensi['energie_activation']
+            
+            fig_Eg = go.Figure()
+            fig_Eg.add_trace(go.Scatter(
+                x=df_Eg['energie_activation'], y=df_Eg['L50'],
+                mode='lines+markers', name='L50',
+                line=dict(color='red')
+            ))
+            
+            fig_Eg.update_layout(
+                title="Taille des cristaux vs Énergie d'Activation",
+                xaxis_title="Énergie d'Activation (J/mol)",
+                yaxis_title="Taille L50 (μm)"
+            )
+            
+            st.plotly_chart(fig_Eg, use_container_width=True)
+            
+            st.markdown("""
+            **Observation:**
+            - Si Eg est trop élevée (> 40000 J/mol), la croissance est extrêmement lente → **Cristaux quasi-invisibles**.
+            - **Choix optimal: 18000 J/mol** (typique pour le saccharose) pour obtenir des cristaux de taille réaliste (~300-500 μm).
+            """)
+            
+            # Tableau récapitulatif
+            st.subheader("Données de l'Analyse")
+            with st.expander("Voir les données brutes"):
+                st.write("Variation Concentration:")
+                st.dataframe(df_conc)
+                st.write("Variation Énergie d'Activation:")
+                st.dataframe(df_Eg)
 
     with tab3:
         st.header("📑 Détails des Calculs (Paramètres Optimisés)")
@@ -495,10 +543,10 @@ def page_cristallisation():
                 G_final_um = G_final * 1e6 * 3600 # um/h
                 
                 st.markdown(f"""
-                **Loi de Croissance :** $G = k_g \cdot S^g \cdot \exp\\left(\\frac{{-E_g}}{{RT}}\\right)$
+                **Loi de Croissance :** $G = k_g \\cdot S^g \\cdot \\exp\\\\left(\\\\frac{{-E_g}}{{RT}}\\\\right)$
                 
                 **Calcul à {Tf_opt}°C :**
-                - Terme Arrhenius : $\exp(\\frac{{-{Eg_opt}}}{{8.314 \\times {T_kelvin:.1f}}}) = {Arrhenius:.2e}$
+                - Terme Arrhenius : $\\exp(\\frac{{-{Eg_opt}}}{{8.314 \\times {T_kelvin:.1f}}}) = {Arrhenius:.2e}$
                 - Terme Sursaturation : ${max(0, S_Tf):.4f}^{{1.5}} = {max(0, S_Tf)**1.5:.4f}$
                 - **Vitesse de Croissance $G$** : {G_final:.2e} m/s
                 - **En unités pratiques** : **{G_final_um:.2f} μm/h** (Vitesse réaliste ✅)
@@ -626,10 +674,14 @@ def page_cristallisation():
 
 def page_economique():
     """Page d'analyse économique (Adaptée Maroc)."""
-    st.markdown('<div class="main-header">💰 Analyse Technico-Économique (Maroc)</div>', 
-                unsafe_allow_html=True)
+    st.markdown('''
+    <div class="main-header">
+        <h1>Analyse Technico-Économique</h1>
+        <p>CAPEX, OPEX et ROI (contexte marocain)</p>
+    </div>
+    ''', unsafe_allow_html=True)
     
-    st.sidebar.header("⚙️ Paramètres Économiques")
+    st.sidebar.header("Paramètres Économiques")
     
     # Investissement
     st.sidebar.subheader("Investissement")
@@ -758,20 +810,20 @@ def main():
     """Fonction principale de l'application."""
     
     # Menu de navigation
-    st.sidebar.title("🧭 Navigation")
+    st.sidebar.title("Navigation")
     page = st.sidebar.radio(
         "Choisir une page:",
-        ["🏠 Accueil", "🔥 Évaporateurs", "❄️ Cristallisation", "💰 Économique"]
+        ["Accueil", "Évaporateurs", "Cristallisation", "Analyse Économique"]
     )
     
     # Afficher la page sélectionnée
-    if page == "🏠 Accueil":
+    if page == "Accueil":
         page_accueil()
-    elif page == "🔥 Évaporateurs":
+    elif page == "Évaporateurs":
         page_evaporateurs()
-    elif page == "❄️ Cristallisation":
+    elif page == "Cristallisation":
         page_cristallisation()
-    elif page == "💰 Économique":
+    elif page == "Analyse Économique":
         page_economique()
     
     # Footer

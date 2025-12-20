@@ -160,7 +160,7 @@ class AnalyseSensibilite:
             Dict[str, pd.DataFrame]: Résultats pour chaque paramètre
         """
         # Imports locaux pour éviter les cycles
-        from cristallisation import CinetiqueCristallisation, BilanPopulation
+        from .cristallisation import CinetiqueCristallisation, BilanPopulation
         
         analyses = {}
         

@@ -13,7 +13,7 @@ Date: 2025
 import numpy as np
 from typing import List, Dict, Tuple
 from dataclasses import dataclass
-import thermodynamique as thermo
+from . import thermodynamique as thermo
 
 
 @dataclass
