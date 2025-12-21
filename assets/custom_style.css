@@ -17,9 +17,12 @@
     /* Amber/Orange */
     --bg-white: #ffffff;
     --bg-light: #f8fafc;
-    --text-dark: #1e293b;
-    --text-gray: #475569;
-    --border-color: #e2e8f0;
+    --text-dark: #0f172a;
+    /* Plus sombre pour meilleur contraste (Slate 900) */
+    --text-gray: #334155;
+    /* Plus sombre (Slate 700) */
+    --border-color: #cbd5e1;
+    /* Plus visible */
     --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
@@ -68,7 +71,7 @@ section[data-testid="stSidebar"]>div {
 
 /* Titre de la sidebar - CRITIQUE */
 section[data-testid="stSidebar"] h1 {
-    color: var(--text-dark) !important;
+    color: #000000 !important;
     font-weight: 800 !important;
     font-size: 1.5rem !important;
     margin-bottom: 1.5rem !important;
@@ -82,14 +85,21 @@ section[data-testid="stSidebar"] h1 {
 .stSelectbox label,
 .stSlider label,
 .stRadio label {
-    color: var(--text-dark) !important;
+    color: #000000 !important;
     font-weight: 600 !important;
     font-size: 0.95rem !important;
 }
 
 /* Valeurs des sliders */
 .stSlider [data-testid="stTickBar"] {
-    color: var(--text-gray) !important;
+    color: #000000 !important;
+}
+
+/* Texte dans sidebar */
+section[data-testid="stSidebar"] p,
+section[data-testid="stSidebar"] span,
+section[data-testid="stSidebar"] div {
+    color: #000000 !important;
 }
 
 /* ===== BUTTONS ===== */
@@ -112,48 +122,71 @@ section[data-testid="stSidebar"] h1 {
 }
 
 /* ===== INFO BOXES - FIX CRITICAL ===== */
-/* Fond bleu avec texte foncé */
-div[data-baseweb="notification"][kind="info"] {
+/* Fond bleu avec texte NOIR - FORCE TOUS LES ÉLÉMENTS */
+div[data-baseweb="notification"][kind="info"],
+div[data-baseweb="notification"][kind="info"] *,
+div[data-baseweb="notification"][kind="info"] p,
+div[data-baseweb="notification"][kind="info"] li,
+div[data-baseweb="notification"][kind="info"] span,
+div[data-baseweb="notification"][kind="info"] strong,
+div[data-baseweb="notification"][kind="info"] div {
     background-color: #dbeafe !important;
     border-left: 4px solid #3b82f6 !important;
-    color: var(--text-dark) !important;
+    color: #000000 !important;
 }
 
-div[data-baseweb="notification"][kind="info"] strong {
-    color: #1e40af !important;
-}
-
-/* Fond vert avec texte foncé */
-div[data-baseweb="notification"][kind="success"] {
+/* Fond vert avec texte NOIR - FORCE TOUS LES ÉLÉMENTS */
+div[data-baseweb="notification"][kind="success"],
+div[data-baseweb="notification"][kind="success"] *,
+div[data-baseweb="notification"][kind="success"] p,
+div[data-baseweb="notification"][kind="success"] li,
+div[data-baseweb="notification"][kind="success"] span,
+div[data-baseweb="notification"][kind="success"] strong,
+div[data-baseweb="notification"][kind="success"] div {
     background-color: #d1fae5 !important;
     border-left: 4px solid var(--accent-emerald) !important;
-    color: var(--text-dark) !important;
+    color: #000000 !important;
 }
 
-div[data-baseweb="notification"][kind="success"] strong {
-    color: #065f46 !important;
-}
-
-/* Fond jaune avec texte foncé */
-div[data-baseweb="notification"][kind="warning"] {
+/* Fond jaune avec texte NOIR - FORCE TOUS LES ÉLÉMENTS */
+div[data-baseweb="notification"][kind="warning"],
+div[data-baseweb="notification"][kind="warning"] *,
+div[data-baseweb="notification"][kind="warning"] p,
+div[data-baseweb="notification"][kind="warning"] li,
+div[data-baseweb="notification"][kind="warning"] span,
+div[data-baseweb="notification"][kind="warning"] strong,
+div[data-baseweb="notification"][kind="warning"] div {
     background-color: #fef3c7 !important;
     border-left: 4px solid var(--accent-amber) !important;
-    color: var(--text-dark) !important;
+    color: #000000 !important;
 }
 
-div[data-baseweb="notification"][kind="warning"] strong {
-    color: #92400e !important;
-}
-
-/* Fond rouge avec texte foncé */
-div[data-baseweb="notification"][kind="error"] {
+/* Fond rouge avec texte NOIR - FORCE TOUS LES ÉLÉMENTS */
+div[data-baseweb="notification"][kind="error"],
+div[data-baseweb="notification"][kind="error"] *,
+div[data-baseweb="notification"][kind="error"] p,
+div[data-baseweb="notification"][kind="error"] li,
+div[data-baseweb="notification"][kind="error"] span,
+div[data-baseweb="notification"][kind="error"] strong,
+div[data-baseweb="notification"][kind="error"] div {
     background-color: #fee2e2 !important;
     border-left: 4px solid #ef4444 !important;
-    color: var(--text-dark) !important;
+    color: #000000 !important;
 }
 
-div[data-baseweb="notification"][kind="error"] strong {
-    color: #991b1b !important;
+/* FORCE GLOBALE pour tous les éléments de notification */
+[data-baseweb="notification"] * {
+    color: #000000 !important;
+}
+
+/* FORCE pour st.info, st.success, st.warning, st.error */
+.stAlert,
+.stAlert *,
+.stAlert p,
+.stAlert li,
+.stAlert span,
+.stAlert strong {
+    color: #000000 !important;
 }
 
 /* ===== METRICS ===== */
@@ -172,7 +205,7 @@ div[data-testid="stMetric"]:hover {
 }
 
 div[data-testid="stMetric"] label {
-    color: var(--text-gray) !important;
+    color: #000000 !important;
     font-weight: 600 !important;
     font-size: 0.875rem !important;
     text-transform: uppercase;
@@ -183,6 +216,10 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
     font-size: 2rem !important;
     font-weight: 700 !important;
     color: var(--primary-color) !important;
+}
+
+div[data-testid="stMetric"] [data-testid="stMetricDelta"] {
+    color: #000000 !important;
 }
 
 /* ===== INPUT FIELDS ===== */
@@ -308,14 +345,14 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 /* ===== RADIO BUTTONS - NAVIGATION CRITIQUE ===== */
 /* Titre "Choisir une page:" */
 .stRadio>label {
-    color: var(--text-dark) !important;
+    color: #000000 !important;
     font-weight: 700 !important;
     font-size: 1rem !important;
 }
 
 /* Options des boutons radio */
 .stRadio [role="radiogroup"] label {
-    color: var(--text-dark) !important;
+    color: #000000 !important;
     font-weight: 600 !important;
     font-size: 0.95rem !important;
     padding: 0.5rem 0 !important;
@@ -323,7 +360,7 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 
 /* Texte des options radio */
 .stRadio [role="radiogroup"] label>div {
-    color: var(--text-dark) !important;
+    color: #000000 !important;
 }
 
 /* Option sélectionnée */
@@ -345,18 +382,22 @@ div[data-testid="stMetric"] [data-testid="stMetricValue"] {
 
 /* ===== MARKDOWN TEXT ===== */
 .stMarkdown {
-    color: var(--text-dark) !important;
+    color: #000000 !important;
 }
 
 .stMarkdown h1,
 .stMarkdown h2,
 .stMarkdown h3 {
-    color: var(--text-dark) !important;
+    color: #000000 !important;
 }
 
 .stMarkdown p,
 .stMarkdown li {
-    color: var(--text-dark) !important;
+    color: #000000 !important;
+}
+
+.stMarkdown strong {
+    color: #000000 !important;
 }
 
 /* ===== ANIMATIONS ===== */

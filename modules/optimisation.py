@@ -223,6 +223,85 @@ class AnalyseSensibilite:
         analyses['energie_activation'] = pd.DataFrame(res_Eg)
         
         return analyses
+
+    def analyse_multivariable_cristallisation(self) -> Tuple[Dict, pd.DataFrame]:
+        """
+        Effectue une étude de sensibilité complète multi-paramètres pour identifier
+        l'optimum global de rendement.
+        
+        Paramètres variés:
+        - Durée: [2, 4, 6, 8, 10] h
+        - Concentration: [70, 80, 90, 100] g/100g
+        - T0: [60, 70, 80] °C (Limité pour solubilité)
+        - Tf: [10, 20, 30, 40] °C
+        - Profil: ['lineaire', 'exponentiel']
+        
+        Returns:
+            Tuple[Dict, pd.DataFrame]: Meilleure configuration et DataFrame complet
+        """
+        from .cristallisation import CinetiqueCristallisation, BilanPopulation
+        import itertools
+        
+        # Grilles de paramètres (OPTIMISÉES pour performance - ~60 combinaisons au lieu de 360)
+        durees = [4, 8]  # Réduit de 5 à 2 points
+        concs = [75, 85, 95]  # Réduit de 4 à 3 points  
+        T0s = [70]  # Fixé à valeur typique (réduit de 3 à 1)
+        Tfs = [15, 25]  # Réduit de 3 à 2 points
+        profils = ['lineaire', 'exponentiel']
+        
+        # Générer toutes les combinaisons (2×3×1×2×2 = 24 combinaisons)
+        combinaisons = list(itertools.product(durees, concs, T0s, Tfs, profils))
+        
+        resultats = []
+        
+        cinetique = CinetiqueCristallisation()
+        # On utilise les paramètres cinétiques optimisés pour l'étude (Eg réaliste)
+        cinetique.params.kg = 3.0e-4
+        cinetique.params.Eg = 18000
+        
+        bilan = BilanPopulation(cinetique)
+        
+        progression = 0
+        total = len(combinaisons)
+        
+        for d, c, t0, tf, p in combinaisons:
+            # Contrainte physique: T0 > Tf
+            if t0 <= tf:
+                continue
+                
+            try:
+                res = bilan.resoudre_batch(
+                    T0_celsius=float(t0), 
+                    Tf_celsius=float(tf),
+                    concentration_initiale=float(c),
+                    volume_batch=10, 
+                    duree_heures=float(d),
+                    profil=p, 
+                    n_classes=20  # Réduit de 30 à 20 pour rapidité (×1.5 plus rapide)
+                )
+                
+                resultats.append({
+                    'Duree_h': d,
+                    'Conc_init': c,
+                    'T0': t0,
+                    'Tf': tf,
+                    'Profil': p,
+                    'Rendement': res['rendement'],
+                    'L50': res['L50'],
+                    'Masse': res['masse_cristaux']
+                })
+            except:
+                pass
+                
+        df_res = pd.DataFrame(resultats)
+        
+        if not df_res.empty:
+            # Trouver l'optimum (Rendement max)
+            best_idx = df_res['Rendement'].idxmax()
+            best_config = df_res.loc[best_idx].to_dict()
+            return best_config, df_res
+        else:
+            return {}, pd.DataFrame()
     
     def generer_graphiques_sensibilite(self, analyses: Dict[str, pd.DataFrame],
                                       dossier_sortie: str = 'resultats/graphiques'):

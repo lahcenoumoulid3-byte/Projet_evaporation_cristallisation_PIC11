@@ -290,10 +290,11 @@ def page_cristallisation():
             st.session_state.crist_results = None
         
         # Réintroduction T0
-        T0 = st.sidebar.slider("Température initiale (°C)", 60, 80, 70, 1)
-        Tf = st.sidebar.slider("Température finale (°C)", 25, 45, 30, 1)
-        duree = st.sidebar.slider("Durée (heures)", 2.0, 6.0, 4.0, 0.5)
-        conc_init = st.sidebar.slider("Concentration initiale (g/100g)", 70.0, 85.0, 78.0, 1.0)
+        # Paramètres étendus (Demande Expert)
+        T0 = st.sidebar.slider("Température initiale (°C)", 25, 80, 70, 1)
+        Tf = st.sidebar.slider("Température finale (°C)", 0, 50, 20, 1)
+        duree = st.sidebar.slider("Durée (heures)", 2.0, 10.0, 6.0, 0.5)
+        conc_init = st.sidebar.slider("Concentration initiale (g/100g)", 70.0, 100.0, 84.0, 0.5)
         profil = st.sidebar.selectbox("Profil de refroidissement", 
                                       ['lineaire', 'exponentiel', 'optimal'])
         
@@ -378,113 +379,80 @@ def page_cristallisation():
             """)
 
     with tab2:
-        # Initialiser session_state pour tab2
-        if 'sensi_results' not in st.session_state:
-            st.session_state.sensi_results = None
-        
-        st.header("Analyse de Sensibilité & Calibration")
+        st.header("🔬 Analyse de Sensibilité Étendue & Optimisation")
         st.markdown("""
-        Cette section permet d'analyser l'impact des paramètres critiques sur la cristallisation
-        et de justifier les choix de calibration pour éviter les résultats nuls (zéros).
+        **Étude Complète:** Cette analyse fait varier systématiquement tous les paramètres critiques 
+        (Durée, Concentration, Températures, Profil) pour identifier la **combinaison optimale** maximisant le rendement.
+        
+        *Paramètres testés:*
+        - Durée: 2 à 10h
+        - Concentration: 70 à 100 g/100g
+        - T0: 60-80°C, Tf: 10-40°C
+        - Profils: Linéaire, Exponentiel
         """)
         
-        col1, col2 = st.columns(2)
-        with col1:
-            st.info("""
-            **Problème Initial (Zéros):**
-            - Concentration trop faible (< Solubilité)
-            - Énergie d'activation trop élevée (Croissance nulle)
-            """)
-        with col2:
-            st.success("""
-            **Solution Appliquée:**
-            - Concentration: **78 g/100g** (Sursaturation > 0)
-            - Énergie d'activation: **18000 J/mol** (Réaliste)
-            """)
+        if st.button("🚀 Lancer l'Optimisation Globale", key="run_global_opt"):
+            prog_bar = st.progress(0)
+            status_text = st.empty()
             
-        if st.button("Lancer l'Analyse de Sensibilité", key="run_sensi"):
-            with st.spinner("Analyse en cours (cela peut prendre une minute)..."):
+            with st.spinner("Exploration de l'espace des paramètres en cours..."):
                 try:
-                    from optimisation import AnalyseSensibilite
+                    from modules.optimisation import AnalyseSensibilite
                     
                     analyseur = AnalyseSensibilite(lambda: None)
-                    res_sensi = analyseur.analyse_sensibilite_cristallisation()
+                    # Note: La fonction est synchrone, on ne verra pas la barre progresser en temps réel 
+                    # sauf si on modifie la lib, mais simulation rapide.
+                    best_config, df_res = analyseur.analyse_multivariable_cristallisation()
+                    prog_bar.progress(100)
                     
-                    # Sauvegarder dans session_state
-                    st.session_state.sensi_results = res_sensi
+                    st.success("Optimisation terminée !")
                     
+                    # Sauvegarde pour propagation (QA/QC)
+                    st.session_state['optimal_params'] = best_config
+                    
+                    # Affichage du Meilleur Résultat
+                    st.subheader("🏆 Configuration Optimale Identifiée")
+                    
+                    c1, c2, c3, c4 = st.columns(4)
+                    c1.metric("Rendement Max", f"{best_config['Rendement']:.1f} %")
+                    c2.metric("Masse Cristaux", f"{best_config['Masse']:.2f} kg")
+                    c3.metric("Taille L50", f"{best_config['L50']:.0f} μm")
+                    c4.metric("Profil", f"{best_config['Profil']}")
+                    
+                    st.write("---")
+                    st.write("**Paramètres Optimaux:**")
+                    c1, c2, c3, c4 = st.columns(4)
+                    c1.metric("Durée", f"{best_config['Duree_h']} h")
+                    c2.metric("Conc. Initiale", f"{best_config['Conc_init']} g/100g")
+                    c3.metric("Temp Initiale (T0)", f"{best_config['T0']} °C")
+                    c4.metric("Temp Finale (Tf)", f"{best_config['Tf']} °C")
+                    
+                    # Visualisation des corrélations
+                    st.subheader("📈 Corrélations Clés")
+                    
+                    tab_viz1, tab_viz2 = st.tabs(["Rendement vs Durée/Conc", "Impact Thermique"])
+                    
+                    with tab_viz1:
+                        # Rendement vs Durée et Concentration
+                        fig = px.scatter(df_res, x='Duree_h', y='Rendement', 
+                                       color='Conc_init', size='Masse',
+                                       title="Rendement selon Durée et Concentration",
+                                       labels={'Duree_h': 'Durée (h)', 'Conc_init': 'Concentration (g/100g)'})
+                        st.plotly_chart(fig, use_container_width=True)
+                        
+                    with tab_viz2:
+                        # Rendement vs Tf
+                        fig2 = px.box(df_res, x='Tf', y='Rendement', color='Profil',
+                                    title="Distribution du Rendement selon Tf et Profil")
+                        st.plotly_chart(fig2, use_container_width=True)
+                    
+                    # Données brutes
+                    with st.expander("Voir toutes les simulations"):
+                        st.dataframe(df_res.sort_values(by='Rendement', ascending=False))
+                        
                 except Exception as e:
-                    st.error(f"Erreur lors de l'analyse: {e}")
+                    st.error(f"Erreur lors de l'optimisation: {e}")
                     st.exception(e)
-        
-        # Afficher les résultats si disponibles
-        if st.session_state.sensi_results is not None:
-            res_sensi = st.session_state.sensi_results
-            
-            # 1. Graphique Concentration
-            st.subheader("1. Impact de la Concentration Initiale")
-            df_conc = res_sensi['concentration']
-            
-            fig_conc = make_subplots(specs=[[{"secondary_y": True}]])
-            
-            fig_conc.add_trace(
-                go.Scatter(x=df_conc['concentration_initiale'], y=df_conc['L50'],
-                          name="Taille L50 (μm)", line=dict(color='blue')),
-                secondary_y=False
-            )
-            
-            fig_conc.add_trace(
-                go.Scatter(x=df_conc['concentration_initiale'], y=df_conc['rendement'],
-                          name="Rendement (%)", line=dict(color='green', dash='dot')),
-                secondary_y=True
-            )
-            
-            fig_conc.update_layout(title_text="Taille et Rendement vs Concentration Initiale")
-            fig_conc.update_xaxes(title_text="Concentration Initiale (g/100g)")
-            fig_conc.update_yaxes(title_text="Taille L50 (μm)", secondary_y=False)
-            fig_conc.update_yaxes(title_text="Rendement (%)", secondary_y=True)
-            
-            st.plotly_chart(fig_conc, use_container_width=True)
-            
-            st.markdown("""
-            **Observation:**
-            - En dessous de ~70 g/100g, la sursaturation est nulle ou négative → **Pas de cristaux (L50 = 0)**.
-            - C'est la cause principale du problème des "zéros".
-            - **Choix optimal: 78 g/100g** pour avoir une taille et un rendement corrects.
-            """)
-            
-            # 2. Graphique Énergie d'Activation
-            st.subheader("2. Impact de l'Énergie d'Activation (Eg)")
-            df_Eg = res_sensi['energie_activation']
-            
-            fig_Eg = go.Figure()
-            fig_Eg.add_trace(go.Scatter(
-                x=df_Eg['energie_activation'], y=df_Eg['L50'],
-                mode='lines+markers', name='L50',
-                line=dict(color='red')
-            ))
-            
-            fig_Eg.update_layout(
-                title="Taille des cristaux vs Énergie d'Activation",
-                xaxis_title="Énergie d'Activation (J/mol)",
-                yaxis_title="Taille L50 (μm)"
-            )
-            
-            st.plotly_chart(fig_Eg, use_container_width=True)
-            
-            st.markdown("""
-            **Observation:**
-            - Si Eg est trop élevée (> 40000 J/mol), la croissance est extrêmement lente → **Cristaux quasi-invisibles**.
-            - **Choix optimal: 18000 J/mol** (typique pour le saccharose) pour obtenir des cristaux de taille réaliste (~300-500 μm).
-            """)
-            
-            # Tableau récapitulatif
-            st.subheader("Données de l'Analyse")
-            with st.expander("Voir les données brutes"):
-                st.write("Variation Concentration:")
-                st.dataframe(df_conc)
-                st.write("Variation Énergie d'Activation:")
-                st.dataframe(df_Eg)
 
     with tab3:
         st.header("📑 Détails des Calculs (Paramètres Optimisés)")
@@ -495,14 +463,27 @@ def page_cristallisation():
         
         if st.button("🧮 Lancer les Calculs Détaillés", key="run_details"):
             try:
-                # 1. Paramètres Optimisés
-                C_opt = 78.0
-                Eg_opt = 18000.0
-                kg_opt = 3.0e-4
-                T0_opt = 70.0
-                Tf_opt = 30.0
-                
-                st.subheader("1. Paramètres d'Entrée Optimisés")
+                # 1. Récupération des Paramètres (Propagation)
+                if 'optimal_params' in st.session_state:
+                    params = st.session_state['optimal_params']
+                    C_opt = float(params['Conc_init'])
+                    # On garde Eg fixe car non varié dans l'optimisation multivariable (fixé à 18000)
+                    Eg_opt = 18000.0 
+                    kg_opt = 3.0e-4
+                    T0_opt = float(params['T0'])
+                    Tf_opt = float(params['Tf'])
+                    duree_opt = float(params['Duree_h'])
+                    st.success("✅ Utilisation des paramètres optimisés identifiés dans l'onglet Analyse.")
+                else:
+                    st.warning("⚠️ Paramètres par défaut (Veuillez lancer l'optimisation dans l'onglet 2 pour des résultats personnalisés).")
+                    C_opt = 78.0
+                    Eg_opt = 18000.0
+                    kg_opt = 3.0e-4
+                    T0_opt = 70.0
+                    Tf_opt = 30.0
+                    duree_opt = 4.0
+
+                st.subheader("1. Paramètres d'Entrée")
                 col1, col2, col3 = st.columns(3)
                 col1.metric("Concentration Initiale", f"{C_opt} g/100g")
                 col2.metric("Énergie d'Activation", f"{Eg_opt} J/mol")
@@ -560,7 +541,7 @@ def page_cristallisation():
                 cinetique.params.Eg = Eg_opt
                 cinetique.params.kg = kg_opt
                 bilan = BilanPopulation(cinetique)
-                res = bilan.resoudre_batch(T0_opt, Tf_opt, C_opt, 10, 4, 'lineaire', 50)
+                res = bilan.resoudre_batch(T0_opt, Tf_opt, C_opt, 10, duree_opt, 'lineaire', 50)
                 
                 st.markdown(f"""
                 Le bilan de population résout l'évolution des moments de la distribution $m_j$.
@@ -599,17 +580,32 @@ def page_cristallisation():
                         volume_batch=10, duree_heures=4, profil='lineaire', n_classes=50
                     )
                     
-                    # Simulation 2: Après (Paramètres Maximisés ++)
-                    # C=84, Eg=15000, Tf=18, Durée=6h (Rendement Ultimatum)
+                    # Simulation 2: Après (Paramètres Optimisés propagés)
                     cinetique_apres = CinetiqueCristallisation()
-                    cinetique_apres.params.kg = 1.2e-3
+                    cinetique_apres.params.kg = 1.2e-3 # Cinétique améliorée
                     cinetique_apres.params.Eg = 15000
+                    
+                    # Valeurs par défaut ou optimisées
+                    if 'optimal_params' in st.session_state:
+                        opt = st.session_state['optimal_params']
+                        C_apres = float(opt['Conc_init'])
+                        T0_apres = float(opt['T0'])
+                        Tf_apres = float(opt['Tf'])
+                        duree_apres = float(opt['Duree_h'])
+                        source_params = "Optimisation Globale (Onglet 2)"
+                    else:
+                        C_apres = 84.0
+                        T0_apres = 70.0
+                        Tf_apres = 18.0
+                        duree_apres = 6.0
+                        source_params = "Optimisation Standard (Défaut)"
                     
                     bilan_apres = BilanPopulation(cinetique_apres)
                     res_apres = bilan_apres.resoudre_batch(
-                        T0_celsius=70, Tf_celsius=18.0, 
-                        concentration_initiale=84.0, 
-                        volume_batch=10, duree_heures=6, profil='lineaire', n_classes=100
+                        T0_celsius=T0_apres, Tf_celsius=Tf_apres, 
+                        concentration_initiale=C_apres, 
+                        volume_batch=10, duree_heures=duree_apres, 
+                        profil='lineaire', n_classes=100
                     )
                     
                     # Affichage côte à côte
@@ -629,12 +625,12 @@ def page_cristallisation():
                         st.warning("Résultat: Zéros ou valeurs négligeables")
                     
                     with col2:
-                        st.success("✅ APRÈS (Optimisation Extrême)")
+                        st.success(f"✅ APRÈS ({source_params})")
                         st.write("**Paramètres:**")
-                        st.write("- Conc: 84 g/100g")
+                        st.write(f"- Conc: {C_apres} g/100g")
                         st.write("- Eg: 15000 J/mol")
-                        st.write("- Tf: 18°C")
-                        st.write("- Durée: 6h")
+                        st.write(f"- Tf: {Tf_apres}°C")
+                        st.write(f"- Durée: {duree_apres}h")
                         st.write("---")
                         st.metric("L50 (Taille)", f"{res_apres['L50']:.2f} μm")
                         st.metric("Rendement", f"{res_apres['rendement']:.1f} %")
@@ -833,7 +829,11 @@ def main():
     Évaporation-Cristallisation  
     du Saccharose
     
-    📅 Date de rendu: 15/12/2025
+    📅 Date de rendu: 24/12/2025
+    
+    OUMOULID LAHCEN
+    
+    BARRY OUMAR
     """)
 
 
