@@ -829,7 +829,6 @@ def main():
     Évaporation-Cristallisation  
     du Saccharose
     
-    📅 Date de rendu: 24/12/2025
     
     OUMOULID LAHCEN
     
