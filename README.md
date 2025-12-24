@@ -226,9 +226,10 @@ pytest tests/ --cov=code --cov-report=html
 - Documentation thermo : https://thermo.readthedocs.io
 
 ## Auteurs
-
 Projet académique - PIC11
 
-## Date de Rendu
+TEAM:
+OUMOULID LAHCEN
+BARRY OUMOUR
 
-15/12/2025
+
